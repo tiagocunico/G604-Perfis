@@ -1,0 +1,4 @@
+﻿__pycache__/
+*.pyc
+# Banco do G Hub: binario grande e pode conter dados da conta Logitech
+backups/**/settings.*

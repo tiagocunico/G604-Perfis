@@ -1,0 +1,20 @@
+﻿== Perfil setor 0001
+report rate byte: 4 -> ~250 Hz
+DPIs: [400, 800, 1600, 3200, 0] padrao idx 1 shift idx 0
+nome: PROFILE_NAME_DEFAULT
+  idx 0 (G1 ) normal: Clique esquerdo              | G-Shift: Especial 0x0
+  idx 1 (G2 ) normal: Clique direito               | G-Shift: Especial 0x0
+  idx 2 (G3 ) normal: Clique do meio               | G-Shift: Especial 0x0
+  idx 3 (G4 ) normal: Tecla Ctrl+S                 | G-Shift: Especial 0x0
+  idx 4 (G5 ) normal: Tecla Ctrl+Z                 | G-Shift: Especial 0x0
+  idx 5 (G6 ) normal: Tecla Enter                  | G-Shift: Especial 0x0
+  idx 6 (G7 ) normal: Tecla Ctrl+X                 | G-Shift: Especial 0x0
+  idx 7 (G8 ) normal: Voltar                       | G-Shift: Especial 0x0
+  idx 8 (G9 ) normal: Avancar                      | G-Shift: Especial 0x0
+  idx 9 (G10) normal: Tecla Ctrl+V                 | G-Shift: Especial 0x0
+  idx10 (G11) normal: Tecla Ctrl+C                 | G-Shift: Especial 0x0
+  idx11 (G12) normal: Tecla Backspace              | G-Shift: Especial 0x0
+  idx12 (G13) normal: Tecla Delete                 | G-Shift: Especial 0x0
+  idx13 (G14) normal: Especial 0x10                | G-Shift: Especial 0x0
+  idx14 (G15) normal: Especial 0x11                | G-Shift: Especial 0x0
+  idx15 (G16) normal: Especial 0x0                 | G-Shift: Especial 0x0
