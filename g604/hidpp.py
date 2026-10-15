@@ -8,6 +8,7 @@ from .transporte import TAMANHO, Transporte
 
 ROOT = 0x0000
 NOME_DISPOSITIVO = 0x0005
+NIVEL_BATERIA = 0x1000
 ONBOARD_PROFILES = 0x8100
 
 # funções do 0x8100
@@ -117,6 +118,14 @@ class Hidpp:
         while len(nome) < n:
             nome += self.chamar(NOME_DISPOSITIVO, 1, bytes([len(nome)]))[: n - len(nome)]
         return nome.decode(errors="replace")
+
+    # ---- Battery Level Status (o G604 informa só níveis discretos, ex.: 100/50/30/10%)
+
+    def bateria(self) -> tuple[int, int, int]:
+        """(nível %, próximo nível %, status); status 0 = descarregando."""
+        self.feature(NIVEL_BATERIA)
+        r = self.chamar(NIVEL_BATERIA, 0)
+        return r[0], r[1], r[2]
 
     # ---- Onboard Profiles
 

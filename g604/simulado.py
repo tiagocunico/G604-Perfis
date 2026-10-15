@@ -12,7 +12,7 @@ from .transporte import TAMANHO, Transporte
 # estado da memória depois da gravação do Vava (slots 1 e 2 habilitados)
 DUMP_PADRAO = Path(__file__).resolve().parent.parent / "tests" / "dados" / "g604_atual.json"
 
-_IDX = {0x0005: 0x03, 0x8100: 0x0E}
+_IDX = {0x0005: 0x03, 0x1000: 0x06, 0x8100: 0x0E}  # índices iguais aos do G604 real
 _ERRO_ARG_INVALIDO = 0x02
 _ERRO_HARDWARE = 0x04
 
@@ -29,6 +29,7 @@ class G604Simulado(Transporte):
         self.modo = 1
         self.perfil = 1
         self.ligado = True
+        self.bateria = 50  # %, como o G604 real informou em 15/10/2026
         self.trocas: list[int] = []
         self.gravacoes: list[int] = []
         self._fila: deque[bytes] = deque()
@@ -60,6 +61,8 @@ class G604Simulado(Transporte):
             return bytes([_IDX.get(fid, 0)])
         if idx == _IDX[0x0005]:
             return bytes([len(self.nome)]) if fn == 0 else self.nome[p[0]:p[0] + 16]
+        if idx == _IDX[0x1000] and fn == 0:
+            return bytes([self.bateria, 30 if self.bateria > 30 else 10, 0])
         if idx != _IDX[0x8100]:
             raise _Erro(_ERRO_ARG_INVALIDO)
         if fn == 0:

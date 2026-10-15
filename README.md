@@ -28,7 +28,9 @@ Para desfazer: `-Remover` (Windows) ou `--remover` (Linux).
 
 ## Usar
 
-**Bandeja**: o ícone mostra a inicial e a cor do perfil ativo. Clique simples alterna o perfil;
+**Bandeja**: o ícone mostra a inicial e a cor do perfil ativo e, embaixo, uma barra com a
+bateria (verde/amarela/vermelha; lida a cada minuto, avisa quando chega no nível mais baixo).
+O G604 informa só níveis aproximados (100/50/30/10%). Clique simples alterna o perfil;
 o menu tem os perfis, liga/desliga a troca automática, abre o editor e abre/recarrega o `perfis.toml`.
 
 **Editor** ("Editar perfis…" no menu da bandeja, ou `python -m g604.editor`):

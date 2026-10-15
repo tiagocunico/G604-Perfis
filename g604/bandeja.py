@@ -9,10 +9,11 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
-from PySide6.QtCore import QLockFile, Qt, QTimer
-from PySide6.QtGui import QAction, QActionGroup, QColor, QFont, QIcon, QPainter, QPixmap
+from PySide6.QtCore import QLockFile, QRectF, Qt, QTimer
+from PySide6.QtGui import QAction, QActionGroup, QColor, QFont, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from . import config as _config
@@ -22,25 +23,52 @@ from .transporte import ReceptorNaoEncontrado
 from .vigia import Vigia
 
 CORES = ["#3d7be0", "#e0473d", "#2fa36b", "#d99a1e", "#8a55d6"]  # slot 1..5
+INTERVALO_BATERIA_S = 60
+BATERIA_BAIXA = 10  # % — o G604 informa níveis discretos (100/50/30/10)
 ERROS_MOUSE = (MouseDesconectado, ReceptorNaoEncontrado, OSError)
 
 
-def icone(texto: str, cor: str) -> QIcon:
+def cor_bateria(nivel: int) -> str:
+    if nivel >= 50:
+        return "#2ecc71"
+    if nivel >= 20:
+        return "#f1c40f"
+    return "#e74c3c"
+
+
+def desenhar_icone(texto: str, cor: str, bateria: int | None = None) -> QPixmap:
+    """Círculo com a inicial do perfil; com bateria, uma barra embaixo preenchida pelo nível."""
     pix = QPixmap(64, 64)
     pix.fill(Qt.transparent)
     p = QPainter(pix)
     p.setRenderHint(QPainter.Antialiasing)
     p.setBrush(QColor(cor))
     p.setPen(Qt.NoPen)
-    p.drawEllipse(2, 2, 60, 60)
+    circulo = QRectF(2, 2, 60, 60) if bateria is None else QRectF(8, 0, 48, 48)
+    p.drawEllipse(circulo)
     p.setPen(QColor("white"))
     f = QFont()
     f.setBold(True)
-    f.setPixelSize(36)
+    f.setPixelSize(36 if bateria is None else 30)
     p.setFont(f)
-    p.drawText(pix.rect(), Qt.AlignCenter, texto)
+    p.drawText(circulo, Qt.AlignCenter, texto)
+    if bateria is not None:
+        # contorno claro + fundo escuro: a parte vazia aparece em barra de tarefas clara e escura
+        caixa = QRectF(3, 44, 58, 18)
+        p.setPen(QPen(QColor("#d8d8d8"), 3))
+        p.setBrush(QColor("#2a2a2a"))
+        p.drawRoundedRect(caixa, 5, 5)
+        p.setPen(Qt.NoPen)
+        interno = caixa.adjusted(4, 4, -4, -4)
+        largura = max(4.0, interno.width() * min(bateria, 100) / 100)
+        p.setBrush(QColor(cor_bateria(bateria)))
+        p.drawRoundedRect(QRectF(interno.x(), interno.y(), largura, interno.height()), 2, 2)
     p.end()
-    return QIcon(pix)
+    return pix
+
+
+def icone(texto: str, cor: str, bateria: int | None = None) -> QIcon:
+    return QIcon(desenhar_icone(texto, cor, bateria))
 
 
 class Bandeja:
@@ -51,6 +79,8 @@ class Bandeja:
         self.mouse: Mouse | None = None
         self.slot_ativo: int | None = None
         self._erro: str | None = None
+        self.bateria: int | None = None
+        self._proxima_bateria = 0.0
         self.editor = None
         self.vigia = Vigia(self.cfg, self._trocar)
 
@@ -85,6 +115,7 @@ class Bandeja:
                 pass
         self.mouse = None
         self.slot_ativo = None
+        self._proxima_bateria = 0.0  # ao voltar, lê a bateria de novo (pode ter trocado a pilha)
         self.vigia.reiniciar()  # ao voltar, reaplica a regra do jogo aberto
 
     def _trocar(self, slot: int):
@@ -101,11 +132,21 @@ class Bandeja:
                     self.tray.showMessage("G604", f"Perfil {self.cfg.perfis[novo].nome}",
                                           QSystemTrayIcon.Information, 2000)
             self.slot_ativo = self._conectar().perfil_ativo()
+            if time.monotonic() >= self._proxima_bateria:
+                self._ler_bateria()
             self._erro = None
         except ERROS_MOUSE as e:
             self._desconectar()
             self._erro = str(e)
         self._atualizar()
+
+    def _ler_bateria(self):
+        nivel = self.mouse.bateria()
+        self._proxima_bateria = time.monotonic() + INTERVALO_BATERIA_S
+        if nivel is not None and nivel <= BATERIA_BAIXA and (self.bateria is None or self.bateria > BATERIA_BAIXA):
+            self.tray.showMessage("G604", f"Bateria do mouse baixa (~{nivel}%). Hora de trocar a pilha.",
+                                  QSystemTrayIcon.Warning, 8000)
+        self.bateria = nivel
 
     def _escolher(self, slot: int):
         try:
@@ -157,12 +198,15 @@ class Bandeja:
             self.tray.setIcon(icone("?", "#777777"))
         else:
             nome = self.cfg.nome_do_slot(self.slot_ativo)
-            self.tray.setIcon(icone(nome[:1].upper(), CORES[(self.slot_ativo - 1) % len(CORES)]))
+            self.tray.setIcon(icone(nome[:1].upper(), CORES[(self.slot_ativo - 1) % len(CORES)],
+                                    self.bateria))
         for slot, a in self.acoes_perfil.items():
             a.setChecked(slot == self.slot_ativo)
         sufixo = " (simulado)" if self.args.simulado else ""
-        self.titulo.setText(f"G604 — {nome}{sufixo}")
-        self.tray.setToolTip(f"G604: {nome}{sufixo}" + (f"\n{erro}" if erro else ""))
+        bat = f" · bateria ~{self.bateria}%" if self.bateria is not None and self.slot_ativo else ""
+        self.titulo.setText(f"G604 — {nome}{bat}{sufixo}")
+        self.tray.setToolTip(f"G604: {nome}{sufixo}" + (f"\nBateria: ~{self.bateria}%" if bat else "")
+                             + (f"\n{erro}" if erro else ""))
 
     def _recarregar(self):
         try:

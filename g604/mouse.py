@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import transporte as _transporte
-from .hidpp import Hidpp, com_crc, crc_ok
+from .hidpp import ErroHidpp, Hidpp, com_crc, crc_ok
 from .perfil import Perfil, entradas_diretorio
 
 SETOR_DIRETORIO = 0x0000
@@ -49,6 +49,14 @@ class Mouse:
 
     def perfil_ativo(self) -> int:
         return self.h.perfil_ativo()
+
+    def bateria(self) -> int | None:
+        """Nível da bateria em % (aproximado), ou None se o mouse não informar."""
+        try:
+            nivel, _, status = self.h.bateria()
+        except ErroHidpp:
+            return None
+        return nivel if status == 0 and 0 < nivel <= 100 else None
 
     def _setor_do_slot(self, slot: int) -> int:
         for i, (setor, _) in enumerate(self.diretorio(), 1):

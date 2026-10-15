@@ -29,7 +29,9 @@ def _pasta_backups(args, cfg) -> Path:
 def cmd_status(args, cfg):
     with _abrir(args) as m:
         ativo = m.perfil_ativo()
-        print(f"{m.h.nome()}  |  modo {'on-board' if m.h.modo() == MODO_ONBOARD else 'host'}")
+        bateria = m.bateria()
+        print(f"{m.h.nome()}  |  modo {'on-board' if m.h.modo() == MODO_ONBOARD else 'host'}"
+              + (f"  |  bateria ~{bateria}%" if bateria is not None else ""))
         for slot, (_, hab) in enumerate(m.diretorio(), 1):
             marca = "*" if slot == ativo else " "
             estado = "habilitado" if hab else "vazio/desabilitado"

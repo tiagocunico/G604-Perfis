@@ -31,6 +31,20 @@ class TestMouseSimulado(unittest.TestCase):
         self.assertEqual(self.m.ler_setor(1), self.sim.memoria[1])
         self.assertEqual(self.m.ler_perfil(2).nome, "Vava")
 
+    def test_bateria(self):
+        self.assertEqual(self.m.bateria(), 50)
+        self.sim.bateria = 10
+        self.assertEqual(self.m.bateria(), 10)
+
+    def test_bateria_nao_suportada(self):
+        from g604.hidpp import ErroHidpp
+
+        def sem_feature(fid):
+            raise ErroHidpp(0, "não suportada")
+
+        self.m.h.feature = sem_feature
+        self.assertIsNone(self.m.bateria())
+
     def test_trocar_nao_grava(self):
         self.m.trocar(2)
         self.assertEqual(self.m.perfil_ativo(), 2)
