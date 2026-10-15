@@ -19,7 +19,18 @@ Para desfazer: `-Remover` (Windows) ou `--remover` (Linux).
 ## Usar
 
 **Bandeja**: o ícone mostra a inicial e a cor do perfil ativo. Clique simples alterna o perfil;
-o menu tem os perfis, liga/desliga a troca automática e abre/recarrega o `perfis.toml`.
+o menu tem os perfis, liga/desliga a troca automática, abre o editor e abre/recarrega o `perfis.toml`.
+
+**Editor** ("Editar perfis…" no menu da bandeja, ou `python -m g604.editor`):
+- nome, taxa, até 5 DPIs (padrão e shift) e a ação de cada botão G1–G15
+  (botão do mouse, tecla, mídia, especial ou bytes brutos);
+- **Capturar**: clique e aperte a tecla/combinação no teclado; ou digite (`Ctrl+Shift+S`);
+- embaixo aparece a lista do que vai mudar; "Gravar no mouse" pede confirmação, faz backup,
+  grava e lê de volta. Mudar só o nome altera apenas o `perfis.toml`;
+- slots vazios: "Habilitar este slot" copia um perfil existente como ponto de partida e já
+  cria a entrada no `perfis.toml`.
+
+Os especiais com "(não testado)" usam códigos do libratbag ainda não confirmados no G604.
 
 **Linha de comando** (`g604 ...` ou `python -m g604 ...`):
 

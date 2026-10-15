@@ -27,7 +27,8 @@ g604/
 ├── config.py       leitura do perfis.toml
 ├── vigia.py        regras "processo → perfil"
 ├── cli.py          g604 status | trocar | mostrar | backup | restaurar | vigia
-└── bandeja.py      ícone na bandeja com menu de perfis e troca automática
+├── bandeja.py      ícone na bandeja com menu de perfis e troca automática
+└── editor.py       janela de edição de perfis (aberta pela bandeja)
 instalar/           windows.ps1, linux.sh, regra udev, autostart do KDE
 tests/              testes offline com mouse simulado alimentado pelos dumps reais
 ```
@@ -39,7 +40,7 @@ tests/              testes offline com mouse simulado alimentado pelos dumps rea
 | 0 | Pacote, transporte por SO, testes offline com mouse simulado | feito |
 | 1 | CLI nos dois sistemas; regra udev no Bazzite | Windows testado no mouse real; falta Bazzite |
 | 2 | Vigia por processo + bandeja (PySide6), início automático | Windows testado no mouse real e instalado; falta Bazzite |
-| 3 | `g604 aplicar`: editar botões/DPI no `perfis.toml` e gravar; depois editor visual | a fazer |
+| 3 | Editor visual (botões, DPI, taxa, nome, habilitar slots) | feito; gravação testada no mouse real |
 | 4 | `.exe` único no Windows (PyInstaller) | a fazer |
 
 Fora do escopo: macros na memória do mouse, iluminação (o G604 não tem RGB).
@@ -50,6 +51,10 @@ Fora do escopo: macros na memória do mouse, iluminação (o G604 não tem RGB).
 - Windows (14/10/2026): status/mostrar/backup/trocar/vigia/bandeja validados no mouse real;
   memória real idêntica ao dump simulado (`tests/dados/g604_atual.json`). `restaurar` só
   validado no simulador (no real, apenas a etapa sem `--confirmar`).
-- Descobrir o que fazem os especiais `0x10`/`0x11` (G14/G15).
+- Descobrir o que fazem os especiais `0x10`/`0x11` (G14/G15) e confirmar os demais
+  códigos especiais (DPI+, ciclo de perfis…) no G604.
+- Editor (15/10/2026): gravação validada no mouse real (taxa do Vava 1000→500→1000, memória
+  final idêntica à inicial). Habilitar slot novo só testado no simulador.
+- Editor ainda não edita os botões com G-Shift (são preservados) nem as regras de jogos.
 - Valorant não roda no Linux (Vanguard); no Bazzite as regras valem para outros jogos.
 - Não rodar junto com G Hub/OMM (Windows) nem Piper/ratbagd/Solaar (Linux).

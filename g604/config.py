@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -71,6 +73,53 @@ def carregar(arquivo: Path | None = None) -> Config:
     except tomllib.TOMLDecodeError as e:
         raise ConfigInvalida(f"{arquivo.name}: {e}") from None
     return de_dict(dados, arquivo)
+
+
+def _chave_nova(nome: str, existentes) -> str:
+    base = unicodedata.normalize("NFKD", nome).encode("ascii", "ignore").decode().lower()
+    base = re.sub(r"[^a-z0-9]+", "_", base).strip("_") or "perfil"
+    chave, n = base, 2
+    while chave in existentes:
+        chave, n = f"{base}_{n}", n + 1
+    return chave
+
+
+def salvar_perfil(arquivo: Path, slot: int, nome: str) -> str:
+    """Cria ou renomeia o perfil do slot no perfis.toml, mexendo só nessas linhas
+    (comentários e o resto do arquivo ficam como estão). Devolve a chave do perfil."""
+    arquivo = Path(arquivo)
+    texto = arquivo.read_bytes().decode("utf-8-sig")  # sem read_text: preserva \r\n
+    cfg = de_dict(tomllib.loads(texto), arquivo)
+    nome_toml = '"' + nome.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    nl = "\r\n" if "\r\n" in texto else "\n"
+    linhas = texto.splitlines(keepends=True)
+    cabecalho = re.compile(r"^\s*\[")
+
+    existente = next((p for p in cfg.perfis.values() if p.slot == slot), None)
+    if existente:
+        chave = existente.chave
+        ini = next(i for i, l in enumerate(linhas)
+                   if re.match(rf"^\s*\[perfis\.{re.escape(chave)}\]\s*$", l))
+        fim = next((i for i in range(ini + 1, len(linhas)) if cabecalho.match(linhas[i])), len(linhas))
+        for i in range(ini + 1, fim):
+            if re.match(r"^\s*nome\s*=", linhas[i]):
+                linhas[i] = f"nome = {nome_toml}{nl}"
+                break
+        else:
+            linhas.insert(ini + 1, f"nome = {nome_toml}{nl}")
+    else:
+        chave = _chave_nova(nome, cfg.perfis)
+        bloco = [nl, f"[perfis.{chave}]{nl}", f"slot = {slot}{nl}", f"nome = {nome_toml}{nl}"]
+        ultimos = [i for i, l in enumerate(linhas) if re.match(r"^\s*\[perfis\.", l)]
+        pos = ultimos[-1] + 1 if ultimos else len(linhas)
+        while pos < len(linhas) and linhas[pos].strip() and not linhas[pos].lstrip().startswith(("#", "[")):
+            pos += 1  # pula as linhas chave = valor do último perfil
+        linhas[pos:pos] = bloco
+
+    novo = "".join(linhas)
+    de_dict(tomllib.loads(novo), arquivo)  # nunca salva um arquivo que não carrega
+    arquivo.write_bytes(novo.encode("utf-8"))  # bytes: não converte as quebras de linha
+    return chave
 
 
 def de_dict(dados: dict, arquivo: Path | None = None) -> Config:

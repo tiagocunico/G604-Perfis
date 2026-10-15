@@ -24,6 +24,9 @@ from dataclasses import dataclass, field
 from .hidpp import com_crc
 
 N_BOTOES = 16
+N_BOTOES_FISICOS = 15  # G1–G15; a 16ª posição da memória não tem botão no G604
+DPI_MIN, DPI_MAX = 100, 16000
+TAXAS_HZ = (125, 250, 500, 1000)
 OFF_BOTOES = 32
 OFF_SHIFT = 96
 OFF_NOME = 160
@@ -139,12 +142,17 @@ class Perfil:
 
     @classmethod
     def do_setor(cls, s: bytes) -> "Perfil":
-        dpis = [s[3 + 2 * i] | s[4 + 2 * i] << 8 for i in range(5)]
+        dpis = []
+        for i in range(5):  # a lista termina no primeiro 0; os índices padrão/shift contam nela
+            d = s[3 + 2 * i] | s[4 + 2 * i] << 8
+            if not d:
+                break
+            dpis.append(d)
         nome = s[OFF_NOME:OFF_NOME + TAM_NOME].decode("utf-16-le", errors="replace")
         return cls(
             nome=nome.split("\0")[0],
             taxa_hz=1000 // s[0] if s[0] else 0,
-            dpis=[d for d in dpis if d],
+            dpis=dpis,
             dpi_padrao=s[1],
             dpi_shift=s[2],
             botoes=[acao_para_texto(s[OFF_BOTOES + 4 * i:OFF_BOTOES + 4 * i + 4]) for i in range(N_BOTOES)],
@@ -153,10 +161,13 @@ class Perfil:
 
     def aplicar_em(self, base: bytes) -> bytes:
         """Novo setor = base com os campos deste perfil por cima (CRC recalculado)."""
-        if self.taxa_hz not in (125, 250, 500, 1000):
+        if self.taxa_hz not in TAXAS_HZ:
             raise AcaoInvalida(f"taxa inválida: {self.taxa_hz} Hz (use 125/250/500/1000)")
         if not 1 <= len(self.dpis) <= 5:
             raise AcaoInvalida("informe de 1 a 5 DPIs")
+        for d in self.dpis:
+            if not DPI_MIN <= d <= DPI_MAX:
+                raise AcaoInvalida(f"DPI {d} fora da faixa do sensor ({DPI_MIN}–{DPI_MAX})")
         for i in (self.dpi_padrao, self.dpi_shift):
             if not 0 <= i < len(self.dpis):
                 raise AcaoInvalida(f"índice de DPI fora da lista: {i}")
@@ -177,6 +188,45 @@ class Perfil:
         if self.nome != Perfil.do_setor(base).nome:
             s[OFF_NOME:OFF_NOME + TAM_NOME] = nome + b"\0" * (TAM_NOME - len(nome))
         return com_crc(bytes(s))
+
+
+NOMES_BOTAO_MOUSE = {"esquerdo": "Clique esquerdo", "direito": "Clique direito", "meio": "Clique do meio",
+                     "voltar": "Voltar", "avancar": "Avançar"}
+
+
+def descrever(texto: str) -> str:
+    """Texto curto para pessoas: 'tecla:Ctrl+S' -> 'Ctrl+S', 'botao:voltar' -> 'Voltar'."""
+    tipo, _, valor = texto.partition(":")
+    if tipo == "tecla":
+        return valor
+    if tipo == "botao":
+        return NOMES_BOTAO_MOUSE.get(valor, valor)
+    if tipo == "midia":
+        return f"Mídia {valor}"
+    if tipo == "especial":
+        return f"Especial {valor}"
+    return texto
+
+
+def diferencas(antes: Perfil, depois: Perfil) -> list[str]:
+    """Lista legível do que muda de um perfil para outro (o nome fica de fora)."""
+    saida = []
+    if antes.taxa_hz != depois.taxa_hz:
+        saida.append(f"taxa {antes.taxa_hz} → {depois.taxa_hz} Hz")
+    if antes.dpis != depois.dpis:
+        saida.append(f"DPIs {'/'.join(map(str, antes.dpis))} → {'/'.join(map(str, depois.dpis))}")
+    for rotulo, i_a, i_d in (("DPI padrão", antes.dpi_padrao, depois.dpi_padrao),
+                             ("DPI shift", antes.dpi_shift, depois.dpi_shift)):
+        va = antes.dpis[i_a] if i_a < len(antes.dpis) else None
+        vd = depois.dpis[i_d] if i_d < len(depois.dpis) else None
+        if va != vd:
+            saida.append(f"{rotulo} {va} → {vd}")
+    for prefixo, la, ld in (("G", antes.botoes, depois.botoes),
+                            ("G-Shift G", antes.botoes_shift, depois.botoes_shift)):
+        for i, (a, d) in enumerate(zip(la, ld), 1):
+            if a != d:
+                saida.append(f"{prefixo}{i}: {descrever(a)} → {descrever(d)}")
+    return saida
 
 
 def entradas_diretorio(setor0: bytes, n_perfis: int) -> list[tuple[int, bool]]:

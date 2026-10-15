@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import transporte as _transporte
-from .hidpp import Hidpp, crc_ok
+from .hidpp import Hidpp, com_crc, crc_ok
 from .perfil import Perfil, entradas_diretorio
 
 SETOR_DIRETORIO = 0x0000
@@ -98,6 +98,21 @@ class Mouse:
                 raise GravacaoRecusada(
                     f"setor {setor:04x} lido de volta diferente do gravado; backup em {arquivo}")
         return arquivo
+
+    def gravar_perfil(self, slot: int, dados: bytes, pasta_backup: Path) -> Path:
+        return self.gravar({self._setor_do_slot(slot): dados}, pasta_backup)
+
+    def habilitar_slot(self, slot: int, dados: bytes, pasta_backup: Path) -> Path:
+        """Grava o perfil num slot desabilitado e o habilita no diretório."""
+        dir_ = self.diretorio()
+        if not 1 <= slot <= len(dir_):
+            raise ValueError(f"slot {slot} não existe")
+        setor, habilitado = dir_[slot - 1]
+        if habilitado:
+            raise ValueError(f"slot {slot} já está habilitado")
+        d0 = bytearray(self.ler_setor(SETOR_DIRETORIO))
+        d0[4 * (slot - 1) + 2] = 1
+        return self.gravar({setor: dados, SETOR_DIRETORIO: com_crc(bytes(d0))}, pasta_backup)
 
 
 def carregar_backup(arquivo: Path) -> dict[int, bytes]:

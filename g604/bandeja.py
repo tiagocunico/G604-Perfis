@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 
 from PySide6.QtCore import QLockFile, Qt, QTimer
 from PySide6.QtGui import QAction, QActionGroup, QColor, QFont, QIcon, QPainter, QPixmap
@@ -50,6 +51,7 @@ class Bandeja:
         self.mouse: Mouse | None = None
         self.slot_ativo: int | None = None
         self._erro: str | None = None
+        self.editor = None
         self.vigia = Vigia(self.cfg, self._trocar)
 
         self.tray = QSystemTrayIcon()
@@ -142,6 +144,7 @@ class Bandeja:
         self.acao_auto.setCheckable(True)
         self.acao_auto.setChecked(auto_ligado)
         self.acao_auto.toggled.connect(lambda on: on and self.vigia.reiniciar())
+        self.menu.addAction("Editar perfis…", self._abrir_editor)
         self.menu.addAction("Editar perfis.toml", self._abrir_config)
         self.menu.addAction("Recarregar perfis.toml", self._recarregar)
         self.menu.addSeparator()
@@ -171,6 +174,25 @@ class Bandeja:
         self._montar_menu()
         self.timer.setInterval(int(self.cfg.intervalo_s * 1000))
         self._verificar()
+
+    def _abrir_editor(self):
+        from .editor import EditorPerfis
+        if self.editor is None:
+            pasta = None
+            if self.args.simulado:
+                pasta = Path(tempfile.gettempdir()) / "g604_simulado"
+            self.editor = EditorPerfis(self._conectar, self.cfg, ao_salvar=self._recarregar,
+                                       pasta_backups=pasta)
+        self.editor.cfg = self.cfg
+        try:
+            self.editor.carregar(self.slot_ativo)
+        except ERROS_MOUSE as e:
+            self._desconectar()
+            self.tray.showMessage("G604", f"Não consegui ler o mouse: {e}", QSystemTrayIcon.Warning, 4000)
+            return
+        self.editor.show()
+        self.editor.raise_()
+        self.editor.activateWindow()
 
     def _abrir_config(self):
         caminho = str(self.cfg.arquivo)
