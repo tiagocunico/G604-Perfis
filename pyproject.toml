@@ -7,6 +7,7 @@ name = "g604"
 version = "0.1.0"
 description = "Perfis on-board do Logitech G604 sem G Hub (Windows e Linux)"
 requires-python = ">=3.9"
+license = { text = "MIT" }
 dependencies = [
     "psutil",
     "tomli; python_version < '3.11'",

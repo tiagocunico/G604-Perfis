@@ -3,6 +3,16 @@
 Configuração do mouse Logitech G604 direto na memória interna (on-board), sem G Hub.
 Comunicação via HID++ 2.0 pelo receptor Lightspeed (`046d:c539`), feature `0x8100` (Onboard Profiles).
 
+> **Aviso**
+> - Projeto independente e **não oficial**: não tem nenhuma relação com a Logitech, nem é
+>   endossado por ela. "Logitech", "G604", "G HUB" e "Lightspeed" são marcas da Logitech,
+>   citadas só para identificar o hardware.
+> - O app **grava na memória interna do mouse**. Ele faz backup antes, confere o CRC e lê
+>   de volta depois de cada gravação, mas use **por sua conta e risco** (veja a [licença](LICENSE)).
+> - Testado **apenas no G604 com o receptor Lightspeed** (`046d:c539`), no Windows 10.
+>   O suporte a Linux foi escrito, mas **ainda não foi testado** num mouse real.
+>   Bluetooth e outros modelos não são suportados.
+
 Funciona no Windows e no Linux (Bazzite/KDE). Não rodar junto com G Hub/Onboard Memory Manager
 (Windows) nem Piper/ratbagd/Solaar (Linux). Plano e status das fases em [PLANO.md](PLANO.md).
 
@@ -119,3 +129,7 @@ da área de trabalho ainda usam o `trocar_perfil.py`; o pacote `g604/` substitui
 - `g604_antes_vava.json` — setores 0000–0002 logo antes de gravar o Vava.
 
 Para restaurar o estado original basta desabilitar o slot 2 (byte 6 do setor `0x0000` = `00`).
+
+## Licença
+
+[MIT](LICENSE). Sem garantias: veja o aviso no topo.
