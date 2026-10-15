@@ -2,3 +2,7 @@
 *.pyc
 # Banco do G Hub: binario grande e pode conter dados da conta Logitech
 backups/**/settings.*
+*.egg-info/
+build/
+# backups gerados pelo app a cada gravação
+backups/automaticos/

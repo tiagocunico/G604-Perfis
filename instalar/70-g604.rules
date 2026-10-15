@@ -1,0 +1,3 @@
+# Receptor Lightspeed da Logitech (046d:c539): libera o /dev/hidraw para o usuário logado.
+# Precisa ter número < 73 para o TAG uaccess valer.
+KERNEL=="hidraw*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c539", TAG+="uaccess"

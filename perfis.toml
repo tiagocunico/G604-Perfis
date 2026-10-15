@@ -1,0 +1,30 @@
+# Perfis do G604 e regras de troca automática.
+# Compartilhado entre o PC com Windows e o Bazzite (via git).
+
+# ---- Perfis -------------------------------------------------------------
+# Cada perfil aponta para um slot da memória do mouse (1 a 5).
+# Para adicionar um: novo bloco [perfis.<chave>] com slot e nome.
+# (o slot precisa estar habilitado no mouse; os slots 3–5 ainda estão vazios)
+
+[perfis.padrao]
+slot = 1
+nome = "Padrão"
+
+[perfis.vava]
+slot = 2
+nome = "Vava"
+
+# ---- Troca automática ---------------------------------------------------
+# Quando um destes processos estiver aberto, o mouse vai para o perfil indicado.
+# Se nenhum estiver aberto, volta para vigia.perfil_padrao.
+# A primeira regra que bater ganha. 'processo' aceita um nome ou uma lista.
+# Para adicionar um jogo: copie um bloco [[regras]] e troque o nome do processo
+# (o nome aparece no Gerenciador de Tarefas > Detalhes, ou com `g604 processos`).
+
+[[regras]]
+processo = "VALORANT-Win64-Shipping.exe"
+perfil = "vava"
+
+[vigia]
+perfil_padrao = "padrao"
+intervalo = 2   # segundos entre verificações

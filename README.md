@@ -3,7 +3,57 @@
 Configuração do mouse Logitech G604 direto na memória interna (on-board), sem G Hub.
 Comunicação via HID++ 2.0 pelo receptor Lightspeed (`046d:c539`), feature `0x8100` (Onboard Profiles).
 
-Requisito: Python 3 com `pip install --user hidapi`. G Hub e Onboard Memory Manager precisam estar fechados.
+Funciona no Windows e no Linux (Bazzite/KDE). Não rodar junto com G Hub/Onboard Memory Manager
+(Windows) nem Piper/ratbagd/Solaar (Linux). Plano e status das fases em [PLANO.md](PLANO.md).
+
+## Instalar
+
+| Sistema | Comando |
+|---|---|
+| Windows | `powershell -ExecutionPolicy Bypass -File instalar\windows.ps1` |
+| Bazzite / Linux | `./instalar/linux.sh` (pede `sudo` só para a regra udev) |
+
+Os dois instalam a bandeja para iniciar junto com o sistema e o comando `g604`.
+Para desfazer: `-Remover` (Windows) ou `--remover` (Linux).
+
+## Usar
+
+**Bandeja**: o ícone mostra a inicial e a cor do perfil ativo. Clique simples alterna o perfil;
+o menu tem os perfis, liga/desliga a troca automática e abre/recarrega o `perfis.toml`.
+
+**Linha de comando** (`g604 ...` ou `python -m g604 ...`):
+
+| Comando | O que faz | Grava na memória? |
+|---|---|---|
+| `status` | slots do mouse e qual está ativo | não |
+| `trocar vava` | ativa um perfil (chave, nome ou nº do slot) | não |
+| `mostrar [perfil]` | botões, DPI e taxa de um perfil | não |
+| `backup` | salva a memória em `backups/automaticos/` | não |
+| `restaurar <arquivo>` | mostra o que mudaria; com `--confirmar` grava (faz backup antes e confere depois) | **sim** |
+| `processos [filtro]` | lista processos abertos, para criar regras | não |
+| `vigia` | troca automática sem a bandeja | não |
+
+`--simulado` em qualquer comando (e na bandeja) usa um G604 simulado e não toca no mouse.
+
+## Adicionar perfis e jogos
+
+Tudo fica no [`perfis.toml`](perfis.toml), compartilhado entre os PCs pelo git:
+
+```toml
+[perfis.csgo]          # novo perfil: aponta para um slot da memória (precisa estar habilitado)
+slot = 3
+nome = "CS"
+
+[[regras]]             # novo jogo: processo → perfil
+processo = ["cs2.exe", "cs2"]
+perfil = "csgo"
+```
+
+Depois, "Recarregar perfis.toml" no menu da bandeja. Para achar o nome do processo: `g604 processos <parte do nome>`.
+
+## Testes
+
+`python -m unittest discover -s tests -t .` — todos offline, com o mouse simulado alimentado pelos dumps reais.
 
 ## Perfis gravados
 
@@ -24,7 +74,10 @@ Requisito: Python 3 com `pip install --user hidapi`. G Hub e Onboard Memory Mana
 | DPI | 400 / **800** / 1600 / 3200 | 400 / **800** / 1600 / 3200 |
 | Taxa | 250 Hz | 1000 Hz |
 
-## Scripts (`scripts/`)
+## Scripts avulsos (`scripts/`)
+
+Versões originais usadas na recuperação de 14/10/2026. Os atalhos "Mouse Padrao"/"Mouse Vava"
+da área de trabalho ainda usam o `trocar_perfil.py`; o pacote `g604/` substitui o resto.
 
 | Script | O que faz | Grava no mouse? |
 |---|---|---|

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "g604"
+version = "0.1.0"
+description = "Perfis on-board do Logitech G604 sem G Hub (Windows e Linux)"
+requires-python = ">=3.9"
+dependencies = [
+    "psutil",
+    "tomli; python_version < '3.11'",
+    # no Linux o acesso é direto por /dev/hidraw, sem hidapi
+    "hidapi; sys_platform != 'linux'",
+]
+
+[project.optional-dependencies]
+bandeja = ["PySide6"]
+
+[project.scripts]
+g604 = "g604.cli:main"
+
+[project.gui-scripts]
+g604-bandeja = "g604.bandeja:main"
+
+[tool.setuptools]
+packages = ["g604"]
