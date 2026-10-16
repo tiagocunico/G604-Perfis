@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import transporte as _transporte
-from .hidpp import ErroHidpp, Hidpp, com_crc, crc_ok
+from .hidpp import ErroHidpp, Hidpp, MouseDesconectado, com_crc, crc_ok
 from .perfil import Perfil, entradas_diretorio
 
 SETOR_DIRETORIO = 0x0000
@@ -19,9 +19,33 @@ class GravacaoRecusada(RuntimeError):
 
 class Mouse:
     def __init__(self, t: _transporte.Transporte | None = None):
-        self.t = t or _transporte.abrir()
-        self.h = Hidpp(self.t)
+        if t is not None:
+            self._iniciar(t)
+            return
+        # receptor plugado com o mouse no modo Bluetooth (ou o contrário): tenta a próxima conexão
+        erro = None
+        for abrir in _transporte.candidatos():
+            try:
+                t = abrir()
+            except (_transporte.ReceptorNaoEncontrado, OSError) as e:
+                erro = e
+                continue
+            try:
+                self._iniciar(t)
+                return
+            except (MouseDesconectado, OSError) as e:
+                t.fechar()
+                erro = e
+        raise erro
+
+    def _iniciar(self, t: _transporte.Transporte):
+        self.t = t
+        self.h = Hidpp(t)
         self.info = self.h.info_memoria()
+
+    @property
+    def conexao(self) -> str:
+        return self.t.descricao
 
     def fechar(self):
         self.t.fechar()

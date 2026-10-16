@@ -44,17 +44,18 @@ def desenhar_icone(texto: str, cor: str, bateria: int | None = None) -> QPixmap:
     p.setRenderHint(QPainter.Antialiasing)
     p.setBrush(QColor(cor))
     p.setPen(Qt.NoPen)
-    circulo = QRectF(2, 2, 60, 60) if bateria is None else QRectF(8, 0, 48, 48)
+    # o mais largo possível: a bandeja reduz o ícone para 16–24 px; a barra cobre a base do círculo
+    circulo = QRectF(0, 0, 64, 64) if bateria is None else QRectF(5, 0, 54, 54)
     p.drawEllipse(circulo)
     p.setPen(QColor("white"))
     f = QFont()
     f.setBold(True)
-    f.setPixelSize(36 if bateria is None else 30)
+    f.setPixelSize(44 if bateria is None else 38)
     p.setFont(f)
     p.drawText(circulo, Qt.AlignCenter, texto)
     if bateria is not None:
         # contorno claro + fundo escuro: a parte vazia aparece em barra de tarefas clara e escura
-        caixa = QRectF(3, 44, 58, 18)
+        caixa = QRectF(2, 46, 60, 17)
         p.setPen(QPen(QColor("#d8d8d8"), 3))
         p.setBrush(QColor("#2a2a2a"))
         p.drawRoundedRect(caixa, 5, 5)
@@ -205,7 +206,9 @@ class Bandeja:
         sufixo = " (simulado)" if self.args.simulado else ""
         bat = f" · bateria ~{self.bateria}%" if self.bateria is not None and self.slot_ativo else ""
         self.titulo.setText(f"G604 — {nome}{bat}{sufixo}")
+        conexao = f"\nConexão: {self.mouse.conexao}" if self.mouse is not None and self.slot_ativo else ""
         self.tray.setToolTip(f"G604: {nome}{sufixo}" + (f"\nBateria: ~{self.bateria}%" if bat else "")
+                             + conexao
                              + (f"\n{erro}" if erro else ""))
 
     def _recarregar(self):

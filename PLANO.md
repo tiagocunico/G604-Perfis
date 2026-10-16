@@ -12,7 +12,9 @@ com troca automática de perfil quando um jogo abre.
   Adicionar perfil ou jogo = adicionar um bloco no arquivo.
 - **Bandeja + vigia no mesmo processo** (PySide6). No Bazzite o uso é no desktop KDE,
   então não precisa de serviço separado para o Modo Jogo.
-- Receptor Lightspeed `046d:c539` nos dois PCs (sem Bluetooth).
+- Conexão pelo receptor Lightspeed `046d:c539` (mouse no índice HID++ 1) ou pelo Bluetooth
+  `046d:b024` (o próprio mouse, índice `0xFF`, usage page `0xFF43`). Tenta o receptor primeiro e,
+  se o mouse não responder por ele, o Bluetooth.
 - Trocar de perfil não grava na memória; só gravações de setor (restaurar/aplicar) gravam,
   sempre com backup antes, checagem de CRC e leitura de volta.
 
@@ -47,7 +49,12 @@ Fora do escopo: macros na memória do mouse, iluminação (o G604 não tem RGB).
 
 ## Pendências
 
-- Testar no Bazzite: `./instalar/linux.sh`, `g604 status`, `g604 trocar`, bandeja.
+- Testar no Bazzite: `./instalar/linux.sh`, `g604 status`, `g604 trocar`, bandeja (receptor e Bluetooth).
+- Bluetooth (16/10/2026, Windows, receptor queimado): status/mostrar/backup/trocar validados no mouse
+  real; gravação também (taxa do slot 2 ida e volta, depois o Vava regravado no slot 2, ~4 s por setor).
+  Bandeja reconecta sozinha depois de desligar/ligar o mouse.
+- Decodificar botões tipo `00 06 xx xx` (ex.: G4 do Padrão gravado fora do app em 16/10/2026):
+  no mouse real fazem Ctrl+S, mas o app mostra `bruto:00060000` e o setor 6 está vazio.
 - Windows (14/10/2026): status/mostrar/backup/trocar/vigia/bandeja validados no mouse real;
   memória real idêntica ao dump simulado (`tests/dados/g604_atual.json`). `restaurar` só
   validado no simulador (no real, apenas a etapa sem `--confirmar`).

@@ -1,4 +1,4 @@
-"""HID++ 2.0 sobre o receptor: Root (0x0000), Device Name (0x0005) e Onboard Profiles (0x8100)."""
+"""HID++ 2.0 (receptor ou Bluetooth): Root (0x0000), Device Name (0x0005) e Onboard Profiles (0x8100)."""
 from __future__ import annotations
 
 import os
@@ -65,16 +65,16 @@ class InfoMemoria:
 
 
 class Hidpp:
-    def __init__(self, transporte: Transporte, indice: int = 1, timeout_s: float = 2.0):
+    def __init__(self, transporte: Transporte, indice: int | None = None, timeout_s: float = 2.0):
         self.t = transporte
-        self.indice = indice
+        self.indice = transporte.indice if indice is None else indice
         self.timeout_s = timeout_s
         # id de software próprio do processo, para não confundir respostas de outro programa
         self.sw = (os.getpid() % 15) + 1
         self._features = {ROOT: 0}
 
     def chamar(self, feature: int, funcao: int, params: bytes = b"") -> bytes:
-        # sem resposta: reenvia uma vez (outro programa pode ter falado com o receptor ao mesmo tempo),
+        # sem resposta: reenvia uma vez (outro programa pode ter falado com o mouse ao mesmo tempo),
         # exceto na gravação, onde repetir um bloco o duplicaria na memória
         try:
             return self._chamar(feature, funcao, params)
@@ -91,7 +91,8 @@ class Hidpp:
         limite = time.monotonic() + self.timeout_s
         while time.monotonic() < limite:
             r = self.t.ler(200)
-            if not r or len(r) < 7 or r[1] != self.indice:
+            # no Bluetooth (Linux) os relatórios de movimento/teclas chegam pelo mesmo hidraw
+            if not r or len(r) < 7 or r[0] not in (0x10, 0x11) or r[1] != self.indice:
                 continue
             if r[2] == idx and r[3] == cabeca:
                 return r[4:]

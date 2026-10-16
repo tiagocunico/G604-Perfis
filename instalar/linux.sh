@@ -59,5 +59,5 @@ fi
 
 echo
 echo "Pronto. Teste com:  g604 status"
-echo "Se der 'sem permissão', tire e recoloque o receptor USB."
+echo "Se der 'sem permissão', tire e recoloque o receptor USB (ou desligue e ligue o mouse, no Bluetooth)."
 echo "A bandeja abre no próximo login, ou agora com: $VENV/bin/g604-bandeja &"

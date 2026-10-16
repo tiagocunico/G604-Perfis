@@ -1,3 +1,5 @@
-# Receptor Lightspeed da Logitech (046d:c539): libera o /dev/hidraw para o usuário logado.
-# Precisa ter número < 73 para o TAG uaccess valer.
+# Libera o /dev/hidraw do G604 para o usuário logado. Precisa ter número < 73 para o TAG uaccess valer.
+# Receptor Lightspeed da Logitech (046d:c539), via USB:
 KERNEL=="hidraw*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c539", TAG+="uaccess"
+# G604 pareado por Bluetooth (barramento 0005, 046d:b024): não há pai USB, casa pelo nome do dispositivo HID
+KERNEL=="hidraw*", KERNELS=="0005:046D:B024.*", TAG+="uaccess"

@@ -101,7 +101,17 @@ class TestHidraw(unittest.TestCase):
             self._hidraw(raiz, "hidraw0", receptor, b"\x05\x01\x09\x02")           # mouse comum
             self._hidraw(raiz, "hidraw1", "0003:00001234:00005678", b"\x06\x00\xff\x85\x11")
             self._hidraw(raiz, "hidraw2", receptor, b"\x06\x00\xff\x09\x01\x85\x10\x85\x11")
-            self.assertEqual(achar_hidraw(raiz), "/dev/hidraw2")
+            self.assertEqual([(c, x.indice) for c, x in achar_hidraw(raiz)], [("/dev/hidraw2", 0x01)])
+
+    def test_bluetooth_depois_do_receptor(self):
+        with tempfile.TemporaryDirectory() as raiz:
+            # no Bluetooth é um hidraw só: mouse, teclado e HID++ (usage page 0xFF43) juntos
+            bt = b"\x05\x01\x09\x02\x85\x02\x06\x43\xff\x0a\x02\x02\x85\x11"
+            self._hidraw(raiz, "hidraw0", "0005:0000046D:0000B024", bt)
+            self._hidraw(raiz, "hidraw1", "0005:0000046D:0000B024", b"\x06\x00\xff\x85\x11")  # page errada
+            self.assertEqual([(c, x.indice) for c, x in achar_hidraw(raiz)], [("/dev/hidraw0", 0xFF)])
+            self._hidraw(raiz, "hidraw5", "0003:0000046D:0000C539", b"\x06\x00\xff\x85\x11")
+            self.assertEqual([c for c, _ in achar_hidraw(raiz)], ["/dev/hidraw5", "/dev/hidraw0"])
 
     def test_sem_receptor(self):
         with tempfile.TemporaryDirectory() as raiz:

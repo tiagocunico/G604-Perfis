@@ -1,7 +1,9 @@
 # G604-Perfis
 
 Configuração do mouse Logitech G604 direto na memória interna (on-board), sem G Hub.
-Comunicação via HID++ 2.0 pelo receptor Lightspeed (`046d:c539`), feature `0x8100` (Onboard Profiles).
+Comunicação via HID++ 2.0, feature `0x8100` (Onboard Profiles), pelo receptor Lightspeed (`046d:c539`)
+ou direto pelo Bluetooth (`046d:b024`). O app usa o receptor se ele estiver plugado e o mouse responder
+por ele; senão, tenta o Bluetooth.
 
 > **Aviso**
 > - Projeto independente e **não oficial**: não tem nenhuma relação com a Logitech, nem é
@@ -9,9 +11,10 @@ Comunicação via HID++ 2.0 pelo receptor Lightspeed (`046d:c539`), feature `0x8
 >   citadas só para identificar o hardware.
 > - O app **grava na memória interna do mouse**. Ele faz backup antes, confere o CRC e lê
 >   de volta depois de cada gravação, mas use **por sua conta e risco** (veja a [licença](LICENSE)).
-> - Testado **apenas no G604 com o receptor Lightspeed** (`046d:c539`), no Windows 10.
+> - Testado **apenas no G604**, no Windows: pelo receptor Lightspeed (`046d:c539`) tudo, inclusive
+>   a gravação; pelo Bluetooth (`046d:b024`) leitura, backup, troca de perfil e gravação de perfil.
 >   O suporte a Linux foi escrito, mas **ainda não foi testado** num mouse real.
->   Bluetooth e outros modelos não são suportados.
+>   Outros modelos não são suportados.
 
 Funciona no Windows e no Linux (Bazzite/KDE). Não rodar junto com G Hub/Onboard Memory Manager
 (Windows) nem Piper/ratbagd/Solaar (Linux). Plano e status das fases em [PLANO.md](PLANO.md).
@@ -30,7 +33,8 @@ Para desfazer: `-Remover` (Windows) ou `--remover` (Linux).
 
 **Bandeja**: o ícone mostra a inicial e a cor do perfil ativo e, embaixo, uma barra com a
 bateria (verde/amarela/vermelha; lida a cada minuto, avisa quando chega no nível mais baixo).
-O G604 informa só níveis aproximados (100/50/30/10%). Clique simples alterna o perfil;
+O G604 informa só níveis aproximados (100/50/30/10% pelo receptor; pelo Bluetooth vem um valor mais fino, ex.: 90%).
+A dica do ícone mostra se a conexão é pelo receptor ou pelo Bluetooth. Clique simples alterna o perfil;
 o menu tem os perfis, liga/desliga a troca automática, abre o editor e abre/recarrega o `perfis.toml`.
 
 **Editor** ("Editar perfis…" no menu da bandeja, ou `python -m g604.editor`):

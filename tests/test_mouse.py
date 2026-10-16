@@ -139,6 +139,58 @@ class TestMouseSimulado(unittest.TestCase):
             self.m.perfil_ativo()
 
 
+class TestConexoes(unittest.TestCase):
+    def test_bluetooth_usa_indice_ff(self):
+        sim = G604Simulado()
+        sim.indice = 0xFF
+        enviados = []
+        original = sim.escrever
+        sim.escrever = lambda p: (enviados.append(p), original(p))
+        m = Mouse(sim)
+        self.assertEqual(m.perfil_ativo(), 1)
+        self.assertEqual({p[1] for p in enviados}, {0xFF})
+
+    def test_ignora_relatorios_que_nao_sao_hidpp(self):
+        # no Bluetooth (Linux) movimento e teclas chegam no mesmo hidraw que o HID++
+        sim = G604Simulado()
+        m = Mouse(sim)
+        original = sim.escrever
+
+        def com_ruido(pacote):
+            sim._fila.append(bytes([0x02, pacote[1], pacote[2], pacote[3], 9, 9, 9]))
+            original(pacote)
+
+        sim.escrever = com_ruido
+        self.assertEqual(m.perfil_ativo(), 1)
+
+    def test_tenta_a_proxima_conexao(self):
+        # receptor plugado, mas o mouse está no modo Bluetooth
+        from g604 import transporte
+        receptor, bt = G604Simulado(), G604Simulado()
+        receptor.ligado = False
+        bt.indice, bt.descricao = 0xFF, "Bluetooth"
+        original = transporte.candidatos
+        transporte.candidatos = lambda: iter([lambda: receptor, lambda: bt])
+        try:
+            m = Mouse()
+        finally:
+            transporte.candidatos = original
+        self.assertIs(m.t, bt)
+        self.assertEqual(m.conexao, "Bluetooth")
+
+    def test_nenhuma_conexao_responde(self):
+        from g604 import transporte
+        sim = G604Simulado()
+        sim.ligado = False
+        original = transporte.candidatos
+        transporte.candidatos = lambda: iter([lambda: sim])
+        try:
+            with self.assertRaises(MouseDesconectado):
+                Mouse()
+        finally:
+            transporte.candidatos = original
+
+
 class TestCliSimulado(unittest.TestCase):
     def rodar(self, *args):
         saida = io.StringIO()
